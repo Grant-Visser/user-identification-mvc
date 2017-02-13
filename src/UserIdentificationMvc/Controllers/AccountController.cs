@@ -153,10 +153,10 @@ namespace UserIdentificationMvc.Controllers
             {
                 var user = new ApplicationUser
                 {
-                    UserName = model.EmployeeId.ToString(),
                     EmployeeId = model.EmployeeId,
                     FirstName = model.FirstName,
-                    LastName = model.LastName
+                    LastName = model.LastName,
+                    UserName = model.EmployeeId.ToString()
                 };
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)

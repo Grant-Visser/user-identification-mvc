@@ -16,6 +16,7 @@ namespace UserIdentificationMvc.Models
             // Add custom user claims here
             return userIdentity;
         }
+
         //public Address MyAddress { get; set; }
 
         public string FirstName { get; set; }
@@ -63,6 +64,7 @@ namespace UserIdentificationMvc.Models
             return new ApplicationDbContext();
         }
 
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.HasDefaultSchema("Auth");
@@ -70,26 +72,36 @@ namespace UserIdentificationMvc.Models
             // Mapping for ApiRole ---------------------------------------------------------
 
             // User Table
-            modelBuilder.Entity<ApplicationUser>().Map(c =>
-            {
-                c.ToTable("User");
-                c.Property(p => p.Id).HasColumnName("UserId");
-            }).HasKey(c => c.Id);
-
             modelBuilder.Entity<IdentityUser>()
                                           .Ignore(c => c.Email)
                                           .Ignore(c => c.EmailConfirmed)
-                                          .Ignore(c => c.AccessFailedCount)
+                                          .Ignore(c => c.SecurityStamp)
                                           .Ignore(c => c.LockoutEnabled)
                                           .Ignore(c => c.LockoutEndDateUtc)
-                                          .Ignore(c => c.TwoFactorEnabled);//and so on...
+                                          .Ignore(c => c.TwoFactorEnabled)
+                                          .Ignore(c => c.AccessFailedCount)
+                                          //.Ignore(c => c.UserName)
+                                          .Ignore(c => c.PhoneNumber)
+                                          .Ignore(c => c.PhoneNumberConfirmed);
 
+            modelBuilder.Entity<ApplicationUser>().Map(c =>
+            {
+                c.ToTable("User");
+                c.Properties(p => new
+                {
+                    p.EmployeeId,
+                    p.FirstName,
+                    p.LastName,
+                    p.PasswordHash
+                });
+                c.Property(p => p.Id).HasColumnName("UserId");
+            }).HasKey(c => c.Id);
             modelBuilder.Entity<ApplicationUser>().HasMany(c => c.Logins).WithOptional().HasForeignKey(c => c.UserId);
             modelBuilder.Entity<ApplicationUser>().HasMany(c => c.Claims).WithOptional().HasForeignKey(c => c.UserId);
             modelBuilder.Entity<ApplicationUser>().HasMany(c => c.Roles).WithRequired().HasForeignKey(c => c.UserId);
 
 
-            // UserLogin Table
+            //UserLogin Table
             modelBuilder.Entity<CustomUserLogin>().Map(c =>
             {
                 c.ToTable("UserLogin");
@@ -99,7 +111,7 @@ namespace UserIdentificationMvc.Models
                     p.LoginProvider,
                     p.ProviderKey
                 });
-            }).HasKey(p => new { p.LoginProvider, p.ProviderKey, p.UserId });
+            }).HasKey(p => p.UserId);
 
 
             // Role Table
@@ -124,7 +136,7 @@ namespace UserIdentificationMvc.Models
                     p.RoleId
                 });
             })
-            .HasKey(c => new { c.UserId, c.RoleId });
+            .HasKey(c => c.UserId);
 
             // UserClaim Table
             modelBuilder.Entity<CustomUserClaim>().Map(c =>
@@ -138,7 +150,12 @@ namespace UserIdentificationMvc.Models
                     p.ClaimType
                 });
             }).HasKey(c => c.Id);
+
+            //modelBuilder.Entity<CustomUserLogin>().HasKey(l => l.UserId);
+            //modelBuilder.Entity<CustomRole>().HasKey(r => r.Id);
+            //modelBuilder.Entity<CustomUserRole>().HasKey(r => new { r.RoleId, r.UserId });
         }
+
     }
 
 
