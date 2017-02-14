@@ -254,7 +254,7 @@ namespace UserIdentificationMvc.Controllers
             {
                 return View(model);
             }
-            var user = await UserManager.FindByNameAsync(model.Email);
+            var user = await UserManager.FindByNameAsync(model.EmployeeId.ToString());
             if (user == null)
             {
                 // Don't reveal that the user does not exist
