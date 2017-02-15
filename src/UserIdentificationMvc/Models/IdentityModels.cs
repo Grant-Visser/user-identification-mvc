@@ -7,39 +7,25 @@ using Microsoft.AspNet.Identity.EntityFramework;
 
 namespace UserIdentificationMvc.Models
 {
-    // You can add profile data for the user by adding more properties to your ApplicationUser class, please visit http://go.microsoft.com/fwlink/?LinkID=317594 to learn more.
-    public class ApplicationUser : IdentityUser<int, CustomUserLogin, CustomUserRole, CustomUserClaim>
-    {
-        public async Task<ClaimsIdentity> GenerateUserIdentityAsync(UserManager<ApplicationUser, int> manager)
-        {
-            // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
-            var userIdentity = await manager.CreateIdentityAsync(this, DefaultAuthenticationTypes.ApplicationCookie);
-            // Add custom user claims here
-            return userIdentity;
-        }
-
-        //public Address MyAddress { get; set; }
-
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public int EmployeeId { get; set; }
-    }
-
-    //public class Address
-    //{
-    //    public int Id { get; set; }
-    //    public string City { get; set; }
-    //    public string State { get; set; }
-    //}
-
     public class CustomUserRole : IdentityUserRole<int> { }
     public class CustomUserClaim : IdentityUserClaim<int> { }
     public class CustomUserLogin : IdentityUserLogin<int> { }
 
     public class CustomRole : IdentityRole<int, CustomUserRole>
     {
+        public string Description { get; set; }
+
         public CustomRole() { }
-        public CustomRole(string name) { Name = name; }
+
+        public CustomRole(string name) : this()
+        {
+            Name = name;
+        }
+
+        public CustomRole(string name, string desc) : this(name)
+        {
+            Description = desc;
+        }
     }
 
     public class CustomUserStore : UserStore<ApplicationUser, CustomRole, int,
@@ -58,6 +44,24 @@ namespace UserIdentificationMvc.Models
         {
         }
     }
+
+    public class ApplicationUser : IdentityUser<int, CustomUserLogin, CustomUserRole, CustomUserClaim>
+    {
+        public async Task<ClaimsIdentity> GenerateUserIdentityAsync(UserManager<ApplicationUser, int> manager)
+        {
+            // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
+            var userIdentity = await manager.CreateIdentityAsync(this, DefaultAuthenticationTypes.ApplicationCookie);
+            // Add custom user claims here
+            return userIdentity;
+        }
+
+        //public Address MyAddress { get; set; }
+
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public int EmployeeId { get; set; }
+    }
+
 
     public class ApplicationDbContext :
         IdentityDbContext<ApplicationUser, CustomRole, int, CustomUserLogin, CustomUserRole, CustomUserClaim>
@@ -97,13 +101,27 @@ namespace UserIdentificationMvc.Models
             {
                 c.ToTable("User");
                 c.Properties(p => new { p.Id, p.EmployeeId, p.FirstName, p.LastName, p.PasswordHash });
-                //c.Property(p => p.Id).HasColumnName("UserId");
             }).HasKey(c => c.Id);
 
+            // UserRole Table
+            modelBuilder.Entity<IdentityUserRole>().HasKey(c => new { c.UserId, c.RoleId });
+            modelBuilder.Entity<CustomUserRole>().Map(c =>
+            {
+                c.ToTable("UserRole");
+                c.Properties(p => new { p.UserId, p.RoleId });
+                c.Property(p => p.UserId).HasColumnName("UId");
+                c.Property(p => p.RoleId).HasColumnName("RId");
+            }).HasKey(c => new { c.UserId, c.RoleId });
 
-            modelBuilder.Entity<CustomUserRole>().HasKey(c => new {c.UserId, c.RoleId});
-            modelBuilder.Entity<CustomUserLogin>().HasKey(d => d.UserId);
-                
+            // UserLogin Table
+            modelBuilder.Entity<IdentityUserLogin>().HasKey(d => d.UserId);
+            modelBuilder.Entity<CustomUserLogin>().Map(c =>
+            {
+                c.ToTable("UserLogin");
+                c.Property(p => p.UserId).HasColumnName("ULId");
+            }).HasKey(d => d.UserId);
+
+
             //modelBuilder.Entity<ApplicationUser>().HasMany(c => c.Logins).WithOptional().HasForeignKey(c => c.UserId);
             //modelBuilder.Entity<ApplicationUser>().HasMany(c => c.Claims).WithOptional().HasForeignKey(c => c.UserId);
             //modelBuilder.Entity<ApplicationUser>().HasMany(c => c.Roles).WithRequired().HasForeignKey(c => c.UserId);
